@@ -1,82 +1,123 @@
-# bun-vite-react-tanstack-starter
+# react-compiler-vite-tanstack-starter
+
+![Screenshot of the App](assets/screenshot.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev)
-[![Bun](https://img.shields.io/badge/Bun-latest-fbf0df?logo=bun)](https://bun.sh)
 [![Vite](https://img.shields.io/badge/Vite-7-646cff?logo=vite)](https://vitejs.dev)
 [![TanStack Router](https://img.shields.io/badge/TanStack_Router-v1-ff4154)](https://tanstack.com/router)
+[![Biome](https://img.shields.io/badge/Biome-2-60a5fa)](https://biomejs.dev)
 
-Frontend SPA starter: **Bun + Vite 7 + React 19 + React Compiler + TanStack Router + shadcn/ui + Tailwind v4 + Biome**. MIT.
+**A minimal, ready-to-fork React 19 SPA starter with the React Compiler wired up and working — plus TanStack Router, Tailwind CSS v4, shadcn/ui, Biome, and Zod. Works with npm, pnpm, yarn, or bun.**
+
+## Why this exists
+
+Setting up the React Compiler with Vite, TanStack Router, and Tailwind v4 takes longer than it should — these tools are brand new and few examples show them working together. While building [SFDevTools](https://www.sfdevtools.com) I worked through all the wiring; this repo captures the result so you can skip straight to building.
+
+## What it demonstrates
+
+The included demo page (`src/App.tsx`) makes the React Compiler's automatic memoization visible without opening DevTools:
+
+- **No `useMemo`** — an expensive filter + sort over 5 000 items is memoized by the compiler
+- **No `useCallback`** — event handlers are stable across renders without manual wrapping
+- **No `React.memo`** — child components skip re-renders automatically when their props haven't changed
+- A **"Re-render parent"** button lets you verify child stability at runtime
+
+Once you've seen it work, delete the demo and start building.
 
 ## Quickstart
 
 ```bash
-bun install
-bun dev          # http://localhost:5173
-bun run build
-bun run check    # biome lint + format
-bun run lint     # eslint react-compiler rule only
+# npm
+npm install && npm run dev
+
+# pnpm
+pnpm install && pnpm dev
+
+# yarn
+yarn install && yarn dev
+
+# bun (also supported)
+bun install && bun dev
+```
+
+Default dev server: http://localhost:5173
+
+```bash
+npm run build
+npm run check    # biome: format + lint (auto-fix)
+npm run lint     # eslint: react-compiler rule only
 ```
 
 ## Stack
 
-| Tool | Purpose |
+| Tool | Role |
 |---|---|
-| **Bun** | Runtime + package manager |
 | **Vite 7** | Dev server + bundler |
 | **React 19** + React Compiler | UI + automatic memoization (no `useMemo` / `useCallback` / `React.memo`) |
-| **TanStack Router** | File-based routing; generated tree at `src/routeTree.gen.ts` |
-| **Tailwind v4** | Utility CSS via `@tailwindcss/vite` — no `tailwind.config.js` |
+| **TanStack Router** | File-based routing; route tree auto-generated at `src/routeTree.gen.ts` |
+| **Tailwind CSS v4** | Utility CSS via `@tailwindcss/vite` — no `tailwind.config.js` |
 | **shadcn/ui** | Copy-paste component primitives; `components.json` wired for the CLI |
-| **Biome 2** | Formatting + general linting (replaces Prettier + most ESLint rules) |
-| **ESLint** | Single rule only: `react-compiler/react-compiler` — no Biome equivalent |
-| **Husky + lint-staged** | Pre-commit: Biome auto-fix → ESLint react-compiler check |
+| **Biome 2** | Formatting + general linting — replaces Prettier and most ESLint rules |
+| **ESLint** | One rule only: `react-compiler/react-compiler` — no Biome equivalent |
+| **Husky + lint-staged** | Pre-commit: Biome auto-fixes staged files → ESLint checks compiler rule |
+| **Zod** | Runtime validation at env and API boundaries |
 
-## Pre-commit hooks
+> **Bun:** This starter is fully Bun-compatible. `@types/bun` is included, `bun.lockb` / `bun.lock` are gitignored. Swap in `bun install` / `bunx` wherever you prefer.
 
-On every `git commit`, lint-staged runs:
+## Pre-commit pipeline
 
-1. `biome check --write` — formats and fixes all staged `*.{ts,tsx,js,jsx,json,css}`
-2. `eslint` — enforces the react-compiler rule on `*.{ts,tsx}`; fails the commit if the compiler cannot optimise a component
+```
+git commit
+  └─ lint-staged
+       ├─ biome check --write   ← format + lint all staged *.{ts,tsx,js,jsx,json,css}
+       └─ eslint                ← react-compiler rule on *.{ts,tsx}
+```
 
-## React Compiler demo
+## Adding a route
 
-`src/App.tsx` includes a `CompilerDemo` component that shows automatic memoization in practice:
+Drop a file under `src/routes/`. The router plugin regenerates `src/routeTree.gen.ts` on save.
 
-- **No `useMemo`** — expensive filter + sort over 5 000 items is memoized by the compiler
-- **No `useCallback`** — event handlers are stable across renders without manual wrapping
-- **No `React.memo`** — `StatCard` children skip re-renders automatically when their props haven't changed
-- A **"Re-render parent"** button lets you verify child stability at runtime
-
-To confirm the compiler ran on a production build, check `dist/assets/*.js` for `react.memo_cache_sentinel`.
+```
+src/routes/my-page.tsx   →   /my-page
+```
 
 ## Adding shadcn primitives
 
-`components.json` is configured for Tailwind v4 (no config path) with `new-york` style. Add components via the CLI:
-
 ```bash
-bunx shadcn@latest add button
+npx shadcn@latest add card
+npx shadcn@latest add input
 ```
 
-Or copy primitives directly into `src/components/ui/`. The `cn()` helper lives at `@/lib/utils`.
+Or copy components directly into `src/components/ui/`. The `cn()` helper is at `@/lib/utils`.
+
+## Verifying the React Compiler ran
+
+Search the production bundle for `react.memo_cache_sentinel`:
+
+```bash
+npm run build && grep -r "memo_cache_sentinel" dist/assets/
+```
 
 ## Layout
 
 ```
 src/
-  routes/            # __root.tsx, index.tsx, about.tsx
-  components/ui/     # button.tsx (and any added shadcn primitives)
+  routes/            # __root.tsx  index.tsx  about.tsx
+  components/ui/     # button.tsx  (+ any added shadcn primitives)
   lib/utils.ts       # cn()
-  styles/globals.css # tailwind v4 entry
+  styles/globals.css # tailwind v4 entry point
   routeTree.gen.ts   # generated — do not edit
+  env.ts             # zod-validated import.meta.env
   router.tsx
   App.tsx            # RouterProvider + React Compiler demo
   main.tsx
 ```
 
-## Adding a route
+## Related templates
 
-Drop a file under `src/routes/`. The TanStack Router plugin regenerates `routeTree.gen.ts` on save.
+- [salesforce-oauth-pkce-hono-bun](https://github.com/ShriPunta/salesforce-oauth-pkce-hono-bun) — Production-ready Salesforce OAuth 2.0 PKCE backend with Hono + Bun
+- [salesforce-react-query-hooks](https://github.com/ShriPunta/salesforce-react-query-hooks) — TanStack Query v5 hooks for the Salesforce REST API
 
 ## License
 
