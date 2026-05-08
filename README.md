@@ -65,13 +65,16 @@ npm run lint     # eslint: react-compiler rule only
 
 > **Bun:** This starter is fully Bun-compatible. `@types/bun` is included, `bun.lockb` / `bun.lock` are gitignored. Swap in `bun install` / `bunx` wherever you prefer.
 
-## Pre-commit pipeline
+## Git hooks
 
 ```
 git commit
   └─ lint-staged
        ├─ biome check --write   ← format + lint all staged *.{ts,tsx,js,jsx,json,css}
        └─ eslint                ← react-compiler rule on *.{ts,tsx}
+
+git push
+  └─ tsc --noEmit              ← full type-check before anything reaches the remote
 ```
 
 ## Adding a route
